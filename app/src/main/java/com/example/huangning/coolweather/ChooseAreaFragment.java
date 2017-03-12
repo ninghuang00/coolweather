@@ -3,7 +3,6 @@ package com.example.huangning.coolweather;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,12 +37,14 @@ public class ChooseAreaFragment extends Fragment {
     public static final int LEVEL_PROVINCE = 0;
     public static final int LEVEL_CITY = 1;
     public static final int LEVEL_COUNTY = 2;
+    //主要控件
     private ProgressDialog progressDialog;
-    private TextView titleText;
-    private Button backButton;
-    private ListView listView;
-    private ArrayAdapter<String> adapter;
-    private List<String> dataList = new ArrayList<>();
+    private TextView titleText; //显示标题内容
+    private Button backButton;  //后退按钮
+    private ListView listView;  //省市县的数据在这里显示，会自动给每个子项之间添加分隔线，也可以用RecyclerView
+    //保存数据的对象
+    private ArrayAdapter<String> adapter;   //联系数据和视图控件
+    private List<String> dataList = new ArrayList<>();//要显示的数据列表
     //省列表
     private List<Province> provinceList;
     //市列表
@@ -59,12 +60,14 @@ public class ChooseAreaFragment extends Fragment {
     //当前选中级别
     private int currentLevel;
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.choose_area, container, false);
         titleText = (TextView)view.findViewById(R.id.title_text);
         backButton = (Button)view.findViewById(R.id.back_button);
         listView = (ListView)view.findViewById(R.id.list_view);
+        //数组适配器，参数一：当前上下文；参数二：布局；参数三：显示在布局中的数据。
         adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, dataList);
         listView.setAdapter(adapter);
 
@@ -98,7 +101,8 @@ public class ChooseAreaFragment extends Fragment {
                 }
             }
         });
-        queryProvinces();
+
+        queryProvinces();   //先查询省的数据
     }
 
     /**
@@ -106,18 +110,21 @@ public class ChooseAreaFragment extends Fragment {
      */
     private void queryProvinces(){
         titleText.setText("中国");
-        backButton.setVisibility(View.GONE);
-        provinceList = DataSupport.findAll(Province.class);
-        if(provinceList.size() > 0){
-            dataList.clear();
-            for(Province province : provinceList){
+        backButton.setVisibility(View.GONE);    //省上面没有级别了，先隐藏后退按钮
+        provinceList = DataSupport.findAll(Province.class); //参数传入泛型，从数据库查询你省的数据
+        if(provinceList.size() > 0){    //如果有数据，则处理
+            dataList.clear();   //清空列表？
+            for(Province province : provinceList){  //将省的名字加入列表
                 dataList.add(province.getProvinceName());
             }
-            adapter.notifyDataSetChanged();
-            listView.setSelection(0);
-            currentLevel = LEVEL_PROVINCE;
+            //Notifies the attached observers that the underlying data has been changed and any View reflecting the data set should refresh itself.
+            adapter.notifyDataSetChanged(); //通知dataList数据发生改变
+            //Sets the currently selected item. If in touch mode, the item will not be selected but it will still be positioned appropriately.
+            // If the specified selection position is less than 0, then the item at position 0 will be selected.
+            listView.setSelection(0);   //把第一项显示在最顶端
+            currentLevel = LEVEL_PROVINCE;  //现在处于省级
         }
-        else{
+        else{   //数据库没有则从服务器查询
             String address = "http://guolin.tech/api/china";
             queryFromServer(address, "province");
         }
@@ -129,6 +136,7 @@ public class ChooseAreaFragment extends Fragment {
     private void queryCities(){
         titleText.setText(selectedProvince.getProvinceName());
         backButton.setVisibility(View.VISIBLE);
+        //将provinceid = 所选省的数据库id的列取出来
         cityList = DataSupport.where("provinceid = ?",String.valueOf(selectedProvince.getId())).find(City.class);
         if(cityList.size() > 0){
             dataList.clear();
@@ -178,22 +186,23 @@ public class ChooseAreaFragment extends Fragment {
      */
     private void queryFromServer(String address, final String type){
         showProgressDialog();
-        HttpUtil.sendOkHttpRequest(address, new Callback() {
+        HttpUtil.sendOkHttpRequest(address, new Callback() {    //下面实现接口对象callback
             @Override
             public void onFailure(Call call, IOException e) {
                 //通过runOnUiThread()方法回到主线程处理逻辑
                 getActivity().runOnUiThread(new Runnable(){
                     @Override
                     public void run() {
-                        closeProgressDialog();
-                        Toast.makeText(getContext(),"加载失败",Toast.LENGTH_SHORT).show();
+                        closeProgressDialog();      //关闭进度显示
+                        Toast.makeText(getContext(),"加载失败",Toast.LENGTH_SHORT).show();  //显示提示
                     }
                 });
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String responseText = response.body().string();
+            public void onResponse(Call call, Response response) throws IOException {   //Call是接口，Response是一个类，response是从哪里传入的？
+                String responseText = response.body().string(); //获取服务器响应的body的字段
+                //判断省市县，调用省市县的handle方法处理字段，并返回结果true和false
                 boolean result = false;
                 if("province".equals(type)){
                     result = Utility.handleProvinceResponse(responseText);
@@ -204,6 +213,7 @@ public class ChooseAreaFragment extends Fragment {
                 else if("county".equals(type)){
                     result = Utility.handleCountyResponse(responseText,selectedCity.getId());
                 }
+
                 if(result){
                     getActivity().runOnUiThread(new Runnable() {
                         @Override

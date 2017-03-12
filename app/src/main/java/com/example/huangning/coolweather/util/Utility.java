@@ -22,10 +22,10 @@ public class Utility {
      * @return
      */
     public static boolean handleProvinceResponse(String response){
-        if(!TextUtils.isEmpty(response)){
+        if(!TextUtils.isEmpty(response)){   //判断是否有内容
             try{
-                JSONArray allProvinces = new JSONArray(response);
-                for(int i = 0; i < allProvinces.length(); i++){
+                JSONArray allProvinces = new JSONArray(response);   //将内容转换成JSON队列
+                for(int i = 0; i < allProvinces.length(); i++){     //讲JSON队列中的JSON对象提取处理解析,保存
                     JSONObject provinceObject = allProvinces.getJSONObject(i);
                     Province province = new Province();
                     province.setProvinceName(provinceObject.getString("name"));

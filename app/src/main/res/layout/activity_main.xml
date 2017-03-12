@@ -9,6 +9,7 @@
         android:layout_height="match_parent"
         android:id="@+id/choose_area_fragment"
         android:name="com.example.huangning.coolweather.ChooseAreaFragment"/>
+    <!--通过android:name=""来显式指明要添加的碎片类名-->
 
 </FrameLayout>
 
